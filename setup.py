@@ -38,6 +38,8 @@ setup(
         'console_scripts': [
             'gazebo_spawn = jetbot_ros.gazebo_spawn:main',
             'teleop_keyboard = jetbot_ros.teleop_keyboard:main',
+            'teleop_camera_imu = jetbot_ros.teleop_camera_imu:main',
+            'teleop_camera_joy = jetbot_ros.teleop_camera_joy:main',
             'data_collection = jetbot_ros.data_collection:main',
             'nav_model = jetbot_ros.nav_model:main',
             'motors_nvidia = jetbot_ros.motors_nvidia:main',

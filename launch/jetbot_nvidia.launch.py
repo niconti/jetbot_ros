@@ -13,13 +13,31 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
     
-    motor_controller = Node(package='jetbot_ros', node_executable='motors_nvidia',
+    motor_controller = Node(package='jetbot_ros', executable='motors_nvidia',
+                            remappings=[
+                                ("/jetbot/cmd_vel", "/cmd_vel"),
+                            ],
                             output='screen', emulate_tty=True)              
      
-    oled_controller = Node(package='jetbot_ros', node_executable='oled_ssd1306',
-                            output='screen', emulate_tty=True)  
-    
-    video_source = Node(package='ros_deep_learning', node_executable='video_source',
+    # oled_controller = Node(package='jetbot_ros', executable='oled_ssd1306',
+    #                         output='screen', emulate_tty=True)  
+ 
+    teleop_camera_imu = Node(package='jetbot_ros', executable='teleop_camera_imu',
+                             output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
+
+    # teleop_camera_joy = Node(package='jetbot_ros', executable='teleop_camera_joy',
+    #                         output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
+
+    # teleop_robot_joy = Node(package='teleop_twist_joy', executable='teleop_node',
+    #                     parameters=[
+    #                         {"require_enable_button": "true"},
+    #                     ],
+    #                     remappings=[
+    #                             ("/cmd_vel", "/jetbot/cmd_vel"),
+    #                     ],
+    #                     output='screen', emulate_tty=True)
+
+    video_source = Node(package='ros_deep_learning', executable='video_source',
                         parameters=[
                             {"resource": "csi://0"},
                             {"width": 320},
@@ -34,7 +52,7 @@ def generate_launch_description():
     
     rtp_output = DeclareLaunchArgument('rtp_output', default_value="DUSTINF-LT1.fios-router.home:1234")
     
-    video_output = Node(package='ros_deep_learning', node_executable='video_output',
+    video_output = Node(package='ros_deep_learning', executable='video_output',
                         parameters=[
                             {"resource": ["rtp://", LaunchConfiguration('rtp_output')]},
                             {"codec": "h264"},
@@ -46,7 +64,9 @@ def generate_launch_description():
                         
     return LaunchDescription([
         motor_controller,
-        oled_controller,
+        # oled_controller,
+        teleop_camera_imu,
+        # teleop_camera_joy,
         rtp_output,
         video_source,
         video_output
