@@ -57,8 +57,8 @@ class TeleopCamera(rclpy.node.Node):
     def __init__(self):
         super().__init__('teleop_camera_node')
 
-        self.pan = (MAX_PAN - MIN_PAN) / 2
-        self.tilt = (MAX_TILT - MIN_TILT) / 2
+        self.pan = (MAX_PAN + MIN_PAN) / 2
+        self.tilt = (MAX_TILT + MIN_TILT) / 2
 
         # Subscribed Topics
         self.imu_sub = self.create_subscription(sensor_msgs.msg.Imu, '/imu', self.imu_cb, 10)
@@ -77,10 +77,10 @@ class TeleopCamera(rclpy.node.Node):
         pitch = euler[1]
         yaw   = euler[2]
 
-        self.get_logger().info("rpy: {:.1f} {:.1f} {:.1f}".format(roll, pitch, yaw))
+        self.get_logger().debug("rpy: {:.1f} {:.1f} {:.1f}".format(roll, pitch, yaw))
 
-        self.pan  = (MAX_PAN - MIN_PAN) / 2 - yaw
-        self.tilt = (MAX_TILT - MIN_TILT + 20) / 2 - pitch
+        self.pan  = (MAX_PAN + MIN_PAN) / 2 - yaw
+        self.tilt = (MAX_TILT + MIN_TILT + 20) / 2 - pitch
 
         self.pan = max(self.pan, MIN_PAN)
         self.pan = min(MAX_PAN, self.pan)
@@ -88,7 +88,7 @@ class TeleopCamera(rclpy.node.Node):
         self.tilt = max(self.tilt, MIN_TILT)
         self.tilt = min(MAX_TILT, self.tilt)
 
-        self.get_logger().info("pan, tilt: {:.1f} {:.1f}".format(self.pan, self.tilt))
+        self.get_logger().debug("pan, tilt: {:.1f} {:.1f}".format(self.pan, self.tilt))
 
 
 def main(args=None):
@@ -105,7 +105,10 @@ def main(args=None):
         node.get_logger().error("{}".format(ex))
         exit(1)
 
+    # rate = node.create_rate(10)
     while rclpy.ok():
+
+        # rate.sleep()
         
         pwm.setRotationAngle(1, node.pan)
         pwm.setRotationAngle(0, node.tilt)
