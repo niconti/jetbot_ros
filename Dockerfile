@@ -59,7 +59,7 @@ RUN apt-get update && \
     && apt-get clean
 
 RUN git clone https://github.com/dusty-nv/py3gazebo /opt/py3gazebo && \
-    pip3 install protobuf>=2.6 --verbose && \
+    pip3 install "protobuf>=2.6,<4.21.0" --verbose && \
     pip3 install trollius --verbose && \
     pip3 install pynput --verbose
 
@@ -124,6 +124,15 @@ ENV PYTHONPATH="${JETBOT_ROOT}:${PYTHONPATH}"
 RUN source ${ROS_ENVIRONMENT} && \
     cd ${WORKSPACE_ROOT}/src && \
     git clone https://github.com/dusty-nv/ros_deep_learning && \
+    cd ../ && \
+    colcon build --symlink-install --event-handlers console_direct+
+
+#
+# teleop_twist_joy
+#
+RUN source ${ROS_ENVIRONMENT} && \
+    cd ${WORKSPACE_ROOT}/src && \
+    git clone https://github.com/ros2/teleop_twist_joy && \
     cd ../ && \
     colcon build --symlink-install --event-handlers console_direct+
 

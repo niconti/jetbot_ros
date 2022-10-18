@@ -6,7 +6,7 @@ import os
 
 package_name = 'jetbot_ros'
 
-def generate_data_files(dirs=['launch', 'gazebo/worlds', 'gazebo/models']):
+def generate_data_files(dirs=['launch', 'config', 'gazebo/worlds', 'gazebo/models']):
     """
     Generate recursive list of data files, without listing directories in the output.
     """
@@ -38,8 +38,7 @@ setup(
         'console_scripts': [
             'gazebo_spawn = jetbot_ros.gazebo_spawn:main',
             'teleop_keyboard = jetbot_ros.teleop_keyboard:main',
-            'teleop_camera_imu = jetbot_ros.teleop_camera_imu:main',
-            'teleop_camera_joy = jetbot_ros.teleop_camera_joy:main',
+            'teleop_camera = jetbot_ros.teleop_camera:main',
             'data_collection = jetbot_ros.data_collection:main',
             'nav_model = jetbot_ros.nav_model:main',
             'motors_nvidia = jetbot_ros.motors_nvidia:main',

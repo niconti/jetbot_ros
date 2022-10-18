@@ -46,22 +46,27 @@ import sensor_msgs.msg
 # Pan-Tilt
 from jetbot_ros.PCA9685 import PCA9685
 
-MIN_PAN = 10
-MAX_PAN = 170
-MIN_TILT = 0
-MAX_TILT = 80
 
+PAN_MIN = 10
+PAN_MAX = 170
+PAN_OFFSET = 0
+
+TILT_MIN = 0
+TILT_MAX = 80
+TILT_OFFSET = 10
 
 class TeleopCamera(rclpy.node.Node):
  
     def __init__(self):
         super().__init__('teleop_camera_node')
 
-        self.pan = (MAX_PAN + MIN_PAN) / 2
-        self.tilt = (MAX_TILT + MIN_TILT) / 2
+        self.pan  = (PAN_MAX + PAN_MIN) / 2 + PAN_OFFSET
+        self.tilt = (TILT_MAX + TILT_MIN) / 2 + TILT_OFFSET
 
         # Subscribed Topics
-        self.imu_sub = self.create_subscription(sensor_msgs.msg.Imu, '/imu', self.imu_cb, 10)
+        self.imu_sub = self.create_subscription(sensor_msgs.msg.Imu, '/imu', self.imu_cb, 1)
+        self.joy_sub = self.create_subscription(sensor_msgs.msg.Joy, '/joy', self.joy_cb, 1)
+
 
     def imu_cb(self, msg):
     
@@ -79,19 +84,45 @@ class TeleopCamera(rclpy.node.Node):
 
         self.get_logger().debug("rpy: {:.1f} {:.1f} {:.1f}".format(roll, pitch, yaw))
 
-        self.pan  = (MAX_PAN + MIN_PAN) / 2 - yaw
-        self.tilt = (MAX_TILT + MIN_TILT + 20) / 2 - pitch
+        self.pan  = (PAN_MAX + PAN_MIN) / 2 + PAN_OFFSET - yaw
+        self.tilt = (TILT_MAX + TILT_MIN) / 2 + TILT_OFFSET - pitch
 
-        self.pan = max(self.pan, MIN_PAN)
-        self.pan = min(MAX_PAN, self.pan)
+        self.pan = max(self.pan, PAN_MIN)
+        self.pan = min(PAN_MAX, self.pan)
 
-        self.tilt = max(self.tilt, MIN_TILT)
-        self.tilt = min(MAX_TILT, self.tilt)
+        self.tilt = max(self.tilt, TILT_MIN)
+        self.tilt = min(TILT_MAX, self.tilt)
 
         self.get_logger().debug("pan, tilt: {:.1f} {:.1f}".format(self.pan, self.tilt))
 
 
-def main(args=None):
+    def joy_cb(self, msg):
+    
+        self.get_logger().debug("axes: {}".format(msg.axes))
+
+        PAN_SCALE = 2
+        TILT_SCALE = 2
+        
+        pan_inc  = PAN_SCALE * round(msg.axes[6])
+        tilt_inc = TILT_SCALE * round(msg.axes[7])
+
+        self.pan += pan_inc
+        self.pan = max(self.pan, PAN_MIN)
+        self.pan = min(PAN_MAX, self.pan)
+
+        self.tilt += tilt_inc
+        self.tilt = max(self.tilt, TILT_MIN)
+        self.tilt = min(TILT_MAX, self.tilt)
+
+        # recenter camera
+        if msg.buttons[0]:
+            self.pan  = (PAN_MAX + PAN_MIN) / 2 + PAN_OFFSET
+            self.tilt = (TILT_MAX + TILT_MIN) / 2 + TILT_OFFSET
+
+        self.get_logger().debug("pan, tilt: {:.1f} {:.1f}".format(self.pan, self.tilt))
+
+
+def main(args=None):    
     rclpy.init(args=args)
 
     # Node
@@ -102,7 +133,7 @@ def main(args=None):
         pwm = PCA9685()
         pwm.setPWMFreq(50)
     except OSError as ex:
-        node.get_logger().error("{}".format(ex))
+        node.get_logger().fatal("{}".format(ex))
         exit(1)
 
     # rate = node.create_rate(10)

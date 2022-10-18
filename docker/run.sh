@@ -189,7 +189,7 @@ chmod 777 $XAUTH
 
 # run the container
 sudo docker run --runtime nvidia -it --rm --name jetbot_ros \
-    --network bridge \
+    --network host \
     --privileged \
     -e DISPLAY=$DISPLAY \
     -v /tmp/.X11-unix/:/tmp/.X11-unix \
