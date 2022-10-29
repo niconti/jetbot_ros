@@ -15,6 +15,12 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
+    joy_config_arg = DeclareLaunchArgument('joy_config', default_value='xbox')
+
+    joy_config_file_arg = DeclareLaunchArgument('joy_config_file', default_value=[
+        TextSubstitution(text=os.path.join(get_package_share_directory('jetbot_ros'), 'config', '')), LaunchConfiguration('joy_config'), TextSubstitution(text='.config.yaml')
+    ])
+
     motor_controller = Node(package='jetbot_ros', executable='motors_nvidia',
                             output='screen', emulate_tty=True)              
      
@@ -24,15 +30,10 @@ def generate_launch_description():
     teleop_camera = Node(package='jetbot_ros', executable='teleop_camera',
                          output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
 
-
-    teleop_robot_config = LaunchConfiguration('teleop_robot_config')
-
-    teleop_robot_arg = DeclareLaunchArgument('teleop_robot_config', default_value=[
-        TextSubstitution(text=os.path.join(get_package_share_directory('jetbot_ros'), 'config', '')), 'xbox', TextSubstitution(text='.config.yaml')
-    ])
     
     teleop_robot = Node(package='teleop_twist_joy', executable='teleop_node',
-                        parameters=[teleop_robot_config],
+                        name='teleop_robot',
+                        parameters=[LaunchConfiguration('joy_config_file')],
                         remappings=[
                             ("/cmd_vel", "/jetbot/cmd_vel"),
                         ],
@@ -63,12 +64,13 @@ def generate_launch_description():
                             ("/video_output/image_in", "/jetbot/camera/image_raw"),
                         ],
                         output='screen', emulate_tty=True)
-             
+
     return LaunchDescription([
+        joy_config_arg,
+        joy_config_file_arg,
         motor_controller,
         # oled_controller,
         teleop_camera,
-        teleop_robot_arg,
         teleop_robot,
         rtp_output,
         video_source,

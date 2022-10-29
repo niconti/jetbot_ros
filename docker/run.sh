@@ -196,5 +196,5 @@ sudo docker run --runtime nvidia -it --rm --name jetbot_ros \
     -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH \
     -v /tmp/argus_socket:/tmp/argus_socket \
     -v /etc/enctune.conf:/etc/enctune.conf \
+    -e CYCLONEDDS_URI=file:///workspace/src/jetbot_ros/resource/cyclonedds.xml \
     $MOUNTS $CONTAINER_IMAGE $USER_COMMAND
-	    
