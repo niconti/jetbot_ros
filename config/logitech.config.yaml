@@ -1,16 +1,20 @@
 teleop_robot:
   ros__parameters:
-    axis_linear:  # Left thumb stick vertical
+    require_enable_button: true
+
+    axis_linear:  # LS vertical
       x: 1
     scale_linear:
-      x: 0.7
+      x: 0.325
     scale_linear_turbo:
-      x: 1.5
+      x: 0.650
 
-    axis_angular:  # Left thumb stick horizontal
+    axis_angular:  # LS horizontal
       yaw: 0
     scale_angular:
-      yaw: 0.4
+      yaw: 4.8
+    scale_angular_turbo:
+      yaw: 9.6
 
-    enable_button: 2  # Left trigger button
-    enable_turbo_button: 5  # Right trigger button
+    enable_turbo_button: 4  # LB
+    enable_button: 5        # RB

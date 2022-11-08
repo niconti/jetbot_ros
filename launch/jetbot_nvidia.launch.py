@@ -15,19 +15,35 @@ from launch_ros.actions import Node
 
 def generate_launch_description():
 
-    joy_config_arg = DeclareLaunchArgument('joy_config', default_value='xbox')
+    joy_config_arg = DeclareLaunchArgument('joy_config', default_value='logitech')
 
     joy_config_file_arg = DeclareLaunchArgument('joy_config_file', default_value=[
         TextSubstitution(text=os.path.join(get_package_share_directory('jetbot_ros'), 'config', '')), LaunchConfiguration('joy_config'), TextSubstitution(text='.config.yaml')
     ])
 
+    jetbot_config_file_arg = DeclareLaunchArgument('jetbot_config_file', default_value=[
+        TextSubstitution(text=os.path.join(get_package_share_directory('jetbot_ros'), 'config', '')), 'jetbot', TextSubstitution(text='.config.yaml')
+    ])
+
     motor_controller = Node(package='jetbot_ros', executable='motors_nvidia',
+                            parameters=[LaunchConfiguration('jetbot_config_file')],
                             output='screen', emulate_tty=True)              
-     
+
     # oled_controller = Node(package='jetbot_ros', executable='oled_ssd1306',
     #                         output='screen', emulate_tty=True)  
  
+    monitor_battery = Node(package='jetbot_ros', executable='monitor_battery',
+                        parameters=[
+                            {"warning_level": 20},
+                            {"critical_level": 2},
+                        ],
+                        output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
+
     teleop_camera = Node(package='jetbot_ros', executable='teleop_camera',
+                         parameters=[
+                            {"pan_scale": 2},
+                            {"tilt_scale": 2},
+                         ],
                          output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
 
     
@@ -68,8 +84,10 @@ def generate_launch_description():
     return LaunchDescription([
         joy_config_arg,
         joy_config_file_arg,
+        jetbot_config_file_arg,
         motor_controller,
         # oled_controller,
+        monitor_battery,
         teleop_camera,
         teleop_robot,
         rtp_output,

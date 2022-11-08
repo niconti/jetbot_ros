@@ -147,13 +147,14 @@ def main(args=None):
     while rclpy.ok():
 
         rclpy.spin_once(node)
-        
+
         pwm.setRotationAngle(1, node.pan)
-        # time.sleep(0.1)
         pwm.setRotationAngle(0, node.tilt)
-        # time.sleep(0.1)
         
     pwm.exit_PCA9685()
+    
+    node.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

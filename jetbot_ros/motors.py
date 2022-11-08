@@ -79,9 +79,6 @@ class MotorController(Node):
         # https://github.com/ros-simulation/gazebo_ros_pkgs/blob/231a7219b36b8a6cdd100b59f66a3df2955df787/gazebo_plugins/src/gazebo_ros_diff_drive.cpp#L331
         left = x - rot * self.wheel_separation / 2.0
         right = x + rot * self.wheel_separation / 2.0
-
-        left  = x - rot * 1.0 / 2.0
-        right = x + rot * 1.0 / 2.0
         
         # convert velocities to [-1,1]
         max_speed = (self.max_rpm / 60.0) * 2.0 * math.pi * (self.wheel_diameter * 0.5)

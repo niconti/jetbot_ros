@@ -39,6 +39,7 @@ setup(
             'gazebo_spawn = jetbot_ros.gazebo_spawn:main',
             'teleop_keyboard = jetbot_ros.teleop_keyboard:main',
             'teleop_camera = jetbot_ros.teleop_camera:main',
+            'monitor_battery = jetbot_ros.monitor_battery:main',
             'data_collection = jetbot_ros.data_collection:main',
             'nav_model = jetbot_ros.nav_model:main',
             'motors_nvidia = jetbot_ros.motors_nvidia:main',

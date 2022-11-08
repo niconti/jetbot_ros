@@ -1,0 +1,7 @@
+/jetbot:
+  motors:
+    ros__parameters:
+      max_pwm: 255
+      max_rpm: 225
+      wheel_separation: 0.135
+      wheel_diameter: 0.055
