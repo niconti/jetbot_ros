@@ -17,15 +17,15 @@ def generate_data_files(dirs=['launch', 'config', 'gazebo/worlds', 'gazebo/model
         list_entry = (install_dir, [os.path.join(path, f) for f in files if not f.startswith('.')])
         data_files.append(list_entry)
     return data_files
-    
+
 setup(
     name=package_name,
     version='0.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
-        ('share/ament_index/resource_index/packages',
-            ['resource/' + package_name]),
+        ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name, ['cyclonedds.xml']),
     ] + generate_data_files(),
     install_requires=['setuptools'],
     zip_safe=True,

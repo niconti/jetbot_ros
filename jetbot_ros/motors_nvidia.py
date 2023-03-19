@@ -10,7 +10,7 @@ class MotorControllerNV(MotorController):
     @see motors.py for the base class to implement different controllers.
     """
     MOTOR_LEFT = 1      # left motor ID
-    MOTOR_RIGHT = 2     # right motor ID
+    MOTOR_RIGHT = 4     # right motor ID
     
     def __init__(self):
         super().__init__()

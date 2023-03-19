@@ -188,7 +188,7 @@ xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 chmod 777 $XAUTH
 
 # run the container
-docker run --runtime nvidia -it --rm --name jetbot_ros \
+docker run --runtime nvidia --rm --name jetbot_ros \
     --network host \
     --privileged \
     -e DISPLAY=$DISPLAY \
@@ -196,5 +196,6 @@ docker run --runtime nvidia -it --rm --name jetbot_ros \
     -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH \
     -v /tmp/argus_socket:/tmp/argus_socket \
     -v /etc/enctune.conf:/etc/enctune.conf \
-    -e CYCLONEDDS_URI=file:///workspace/src/jetbot_ros/cyclonedds.xml \
+    -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+    -e CYCLONEDDS_URI=file:///workspace/install/jetbot_ros/share/jetbot_ros/cyclonedds.xml \
     $MOUNTS $CONTAINER_IMAGE $USER_COMMAND
