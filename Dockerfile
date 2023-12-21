@@ -86,7 +86,7 @@ RUN source ${ROS_ROOT}/install/setup.bash && \
 	  --skip-keys "gazebo11 libgazebo11-dev libopencv-dev libopencv-contrib-dev libopencv-imgproc-dev python-opencv python3-opencv" && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean && \
-    colcon build --merge-install --base-paths src/gazebo \
+    MAKEFLAGS="-j2" colcon build --merge-install --base-paths src/gazebo \
     && rm -rf ${ROS_ROOT}/src \
     && rm -rf ${ROS_ROOT}/logs \
     && rm -rf ${ROS_ROOT}/build 
@@ -132,7 +132,7 @@ RUN source ${ROS_ENVIRONMENT} && \
 #
 RUN source ${ROS_ENVIRONMENT} && \
     cd ${WORKSPACE_ROOT}/src && \
-    git clone https://github.com/ros2/teleop_twist_joy && \
+    git clone -b foxy https://github.com/ros2/teleop_twist_joy && \
     cd ../ && \
     colcon build --symlink-install --event-handlers console_direct+
 
@@ -145,6 +145,7 @@ COPY launch ${JETBOT_ROOT}/launch
 COPY gazebo ${JETBOT_ROOT}/gazebo
 COPY resource ${JETBOT_ROOT}/resource
 
+COPY cyclonedds.xml ${JETBOT_ROOT}
 COPY package.xml ${JETBOT_ROOT}
 COPY setup.py ${JETBOT_ROOT}
 COPY setup.cfg ${JETBOT_ROOT}

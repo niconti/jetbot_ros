@@ -58,9 +58,12 @@ source docker/tag.sh
 
 # where the project resides inside docker
 DOCKER_ROOT="/workspace/src/jetbot_ros"	
+JETSON_ROOT="/jetson-inference"
 
 # generate mount commands
-DATA_VOLUME="--volume $PWD/data:$DOCKER_ROOT/data"
+DATA_VOLUME=" \
+--volume $PWD/data:$JETSON_ROOT/data "
+
 DEV_VOLUME=""
 
 # parse user arguments
@@ -167,6 +170,14 @@ done
 
 echo "V4L2_DEVICES:  $V4L2_DEVICES"
 
+# check for display
+DISPLAY_DEVICE=""
+
+if [ -n "$DISPLAY" ]; then
+	sudo xhost +si:localuser:root
+	DISPLAY_DEVICE=" -e DISPLAY=$DISPLAY -v /tmp/.X11-unix/:/tmp/.X11-unix "
+fi
+
 MOUNTS="\
 --device /dev/snd \
 --device /dev/bus/usb \
@@ -175,11 +186,8 @@ MOUNTS="\
 $DEV_VOLUME \
 $DATA_VOLUME \
 $USER_VOLUME \
-$V4L2_DEVICES"
-
-
-# give docker root user X11 permissions
-sudo xhost +si:localuser:root
+$V4L2_DEVICES \
+$DISPLAY_DEVICE"
 
 # enable SSH X11 forwarding inside container (https://stackoverflow.com/q/48235040)
 XAUTH=/tmp/.docker.xauth
@@ -187,14 +195,19 @@ sudo rm -rf $XAUTH
 xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 chmod 777 $XAUTH
 
+# check if shell is interactive
+INTERACTIVE_FLAGS=""
+if $(tty -s); then
+    INTERACTIVE_FLAGS="-it"
+fi
+
 # run the container
-docker run --runtime nvidia -it --rm --name jetbot_ros \
+docker run --runtime nvidia $INTERACTIVE_FLAGS --rm --name jetbot_ros \
     --network host \
     --privileged \
-    -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix/:/tmp/.X11-unix \
     -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH \
     -v /tmp/argus_socket:/tmp/argus_socket \
     -v /etc/enctune.conf:/etc/enctune.conf \
-    -e CYCLONEDDS_URI=file:///workspace/src/jetbot_ros/cyclonedds.xml \
+    -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp \
+    -e CYCLONEDDS_URI=file:///workspace/install/jetbot_ros/share/jetbot_ros/cyclonedds.xml \
     $MOUNTS $CONTAINER_IMAGE $USER_COMMAND

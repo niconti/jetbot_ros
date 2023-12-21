@@ -36,4 +36,4 @@ build_container()
 			.
 }
 
-build_container "jetbot_ros:$ROS_DISTRO-$TAG" "Dockerfile"
+build_container "niconti/jetbot_ros:$ROS_DISTRO-$TAG" "Dockerfile"
