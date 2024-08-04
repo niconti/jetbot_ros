@@ -38,7 +38,7 @@ def generate_launch_description():
     monitor_battery = Node(package='jetbot_ros', executable='monitor_battery',
                         parameters=[
                             {"warning_level": 20},
-                            {"critical_level": 2},
+                            {"critical_level": 10},
                         ],
                         output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
 
@@ -63,8 +63,8 @@ def generate_launch_description():
     video_source = Node(package='ros_deep_learning', executable='video_source',
                         parameters=[
                             {"resource": "csi://0"},
-                            {"width": 0},
-                            {"height": 0},
+                            {"width": 640},
+                            {"height": 480},
                             {"framerate": 15.0}
                         ],
                         remappings=[
@@ -90,7 +90,7 @@ def generate_launch_description():
                             ('compressed')
                         ],
                         remappings=[
-                            ("in", "/detectnet/overlay"),
+                            ("in", "/jetbot/camera/image_raw"),
                             ("out/compressed", "/jetbot/camera/image_raw/compressed")
                         ],
                         output='screen', emulate_tty=True)  
@@ -104,6 +104,13 @@ def generate_launch_description():
                             ("image_in", "/jetbot/camera/image_raw"),
                         ],
                         output='screen', emulate_tty=True)
+    
+    wireless_watcher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            os.path.join(get_package_share_directory('wireless_watcher'), 'launch', 'watcher.launch.py')
+        ]),
+        launch_arguments={'dev': 'wlan0'}.items(),
+    )
 
     return LaunchDescription([
         joy_config_arg,
@@ -116,7 +123,8 @@ def generate_launch_description():
         teleop_camera,
         teleop_robot,
         video_source,
-        detectenet,
-        video_output,
-        image_transport
+        # detectenet,
+        # video_output,
+        image_transport,
+        wireless_watcher
     ])

@@ -136,10 +136,20 @@ RUN source ${ROS_ENVIRONMENT} && \
     cd ../ && \
     colcon build --symlink-install --event-handlers console_direct+
 
+#
+# wireless_watcher
+#
+RUN source ${ROS_ENVIRONMENT} && \
+    cd ${WORKSPACE_ROOT}/src && \
+    git clone -b foxy-devel https://github.com/clearpathrobotics/wireless.git && \
+    cd ../ && \
+    colcon build --symlink-install --event-handlers console_direct+
+
 
 #
 # build project
 #
+COPY config ${JETBOT_ROOT}/config
 COPY jetbot_ros ${JETBOT_ROOT}/jetbot_ros
 COPY launch ${JETBOT_ROOT}/launch
 COPY gazebo ${JETBOT_ROOT}/gazebo

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+# set -e
 
 ros_env_setup="/opt/ros/$ROS_DISTRO/setup.bash"
 echo "sourcing   $ros_env_setup"

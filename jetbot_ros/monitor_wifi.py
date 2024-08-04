@@ -34,86 +34,62 @@
 #
 # Author: Nicola Conti
 
+import re
+import subprocess
 # ROS
 import rclpy
 import rclpy.node
 from rcl_interfaces.msg import ParameterDescriptor
-from sensor_msgs.msg import BatteryState
+from wireless_msgs.msg import Connection, Network
 # UPS-Power-Module
 from jetbot_ros.INA219 import INA219
 
 
-class MonitorBattery(rclpy.node.Node):
+class MonitorWifi(rclpy.node.Node):
  
     def __init__(self, ina219):
-        super().__init__('monitor_battery_node')
+        super().__init__('monitor_wifi_node')
         self.ina219 = ina219
 
         # Parameters
         self.declare_parameter('frequency', 2, ParameterDescriptor(description="The frequency at which to monitor battery state"))
+        self.declare_parameter('ifname', 'wlan0', ParameterDescriptor(description="The wifi interface to monior"))
         self.declare_parameter('warninig_level', 20, ParameterDescriptor(description="The amount of battery charge considered low"))
         self.declare_parameter('critical_level', 10, ParameterDescriptor(description="The amount of battery charge considered critical"))
 
         # Published Topics
-        self.battery_state_pub = self.create_publisher(BatteryState, 'battery_state', 10)
+        self.connection_pub = self.create_publisher(Connection, 'connection', 10)
 
         # Timers
-        freq = self.get_parameter('frequency').value
+        freq= self.get_parameter('frequency').value
         self.update_timer = self.create_timer(freq, self.update_cb)
 
 
     def update_cb(self):
         now = self.get_clock().now()
-        
+
+        IFNAME = self.get_parameter('ifname').value
         WARNING_LEVEL  = self.get_parameter('warninig_level').value
         CRITICAL_LEVEL = self.get_parameter('critical_level').value
 
-        try:
-            bus_voltage   = self.ina219.getBusVoltage_V()            # voltage on V- (load side)
-            shunt_voltage = self.ina219.getShuntVoltage_mV() / 1000  # voltage between V+ and V- across the shunt
-            current       = self.ina219.getCurrent_mA() / 1000       # current in A
-            power         = self.ina219.getPower_W()                 # power in W      
-        except OSError as e:
-            self.get_logger().error("{}".format(e))
-            return
-
-        percentage = (bus_voltage - 6.0) / 2.4                   # (8.4 - 6) / 2.4
-        percentage = max(0, percentage)
-        percentage = min(1, percentage)
-
-        # message
-        msg = BatteryState()
-        msg.header.stamp = now.to_msg()
-        msg.voltage = bus_voltage
-        msg.current = current
-        msg.percentage = percentage
-        msg.design_capacity = 12.0                               # 4 x 3000 mAh
         
-        if current > 0:
-            msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_CHARGING 
-        if current < 0:
-            msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_DISCHARGING
-        if percentage == 1.0:
-            msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_FULL
+        wifi_str = subprocess.check_output(["iwlist", IFNAME, "scan"], stderr=subprocess.STDOUT).decode()
+        fields_str = re.split('\s\s+', wifi_str)
+        fields_list = [re.split('[:=]', field_str, maxsplit=1) for field_str in fields_str]
+        fields_dict = {'dev': fields_str[0], 'type': fields_str[1]}
+        fields_dict.update(dict([field for field in fields_list if len(field) == 2]))
+        print(wifi_str)
 
-        msg.power_supply_health     = BatteryState.POWER_SUPPLY_HEALTH_GOOD
-        msg.power_supply_technology = BatteryState.POWER_SUPPLY_TECHNOLOGY_LION
-        msg.present = True
-        self.battery_state_pub.publish(msg)
+
+        # self.connection_pub.publish(msg)
 
 
 def main(args=None):
     rclpy.init(args=args)
 
-    # Init INA219
-    try:
-        ina219 = INA219(addr=0x42)
-    except OSError as e:
-        node.get_logger().fatal("{}".format(e))
-        exit(1)
 
     # Node
-    node = MonitorBattery(ina219)
+    node = MonitorWifi(ina219)
 
     # Spin
     rclpy.spin(node)
