@@ -9,7 +9,7 @@
 # Also you should set your docker default-runtime to nvidia:
 #     https://github.com/dusty-nv/jetson-containers#docker-default-runtime
 #
-ROS_DISTRO=${1:-"foxy"}
+ROS_DISTRO=${1:-"humble"}
 BASE_IMAGE=$2
 
 # break on errors
@@ -19,7 +19,7 @@ set -e
 source docker/tag.sh
 
 if [ -z $BASE_IMAGE ]; then
-	BASE_IMAGE="dustynv/ros:$ROS_DISTRO-pytorch-l4t-$TAG"
+	BASE_IMAGE="dustynv/ros:$ROS_DISTRO-desktop-l4t-$TAG"
 fi
 
 

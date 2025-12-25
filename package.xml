@@ -10,6 +10,11 @@
   <depend>python3-scipy</depend>
   <depend>python3-smbus</depend>
 
+  <exec_depend>teleop_twist_joy</exec_depend>
+  <exec_depend>image_pipeline</exec_depend>
+  <exec_depend>image_transport</exec_depend>
+  <exec_depend>wireless_watcher</exec_depend>
+
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

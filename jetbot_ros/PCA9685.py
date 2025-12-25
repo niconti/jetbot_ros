@@ -29,7 +29,7 @@ class PCA9685:
 
 
   def __init__(self, address=0x40, debug=False):
-    self.bus = smbus.SMBus(1)
+    self.bus = smbus.SMBus(7)
     self.address = address
     self.debug = debug
     if (self.debug):

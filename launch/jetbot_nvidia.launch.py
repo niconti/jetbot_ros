@@ -47,7 +47,8 @@ def generate_launch_description():
                             {"pan_scale": 2},
                             {"tilt_scale": 2},
                          ],
-                         output='screen', emulate_tty=True, arguments=[('__log_level:=debug')])
+                         ros_arguments=[('--log-level:=debug')]
+                         emulate_tty=True)
 
     teleop_robot = Node(package='teleop_twist_joy', executable='teleop_node',
                         name='teleop_robot',

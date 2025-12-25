@@ -67,7 +67,7 @@ DATA_VOLUME=" \
 DEV_VOLUME=""
 
 # parse user arguments
-ROS_DISTRO="foxy"
+ROS_DISTRO="humble"
 USER_VOLUME=""
 USER_COMMAND=""
 

@@ -5,14 +5,8 @@ source docker/l4t_version.sh
 
 TAG="r$L4T_VERSION"
 
-if [[ $L4T_VERSION = 32.5.* ]]; then
-	TAG="r32.5.0"
-fi
-if [[ $L4T_VERSION = 32.6.* ]]; then
-	TAG="r32.6.1"
-fi
-if [[ $L4T_VERSION = 32.7.* ]]; then
-	TAG="r32.7.1"
+if [[ $L4T_VERSION = 36.4.* ]]; then
+	TAG="r36.4.0"
 fi
 
 #CONTAINER_IMAGE_ELOQUENT="jetbot_ros:eloquent-$TAG"
