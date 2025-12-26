@@ -90,19 +90,19 @@ def generate_launch_description():
                     ("resize/camera_info", "resize/camera_info")
                 ]
             ),
-            # ComposableNode(
-            #     namespace='jetbot/camera',
-            #     name='flip',
-            #     package='isaac_ros_image_proc',
-            #     plugin='nvidia::isaac_ros::image_proc::ImageFlipNode',
-            #     parameters=[
-            #         { 'flip_mode': 'BOTH' }
-            #     ],
-            #     remappings=[
-            #         ("image", "resize/image_raw"),
-            #         ("image_flipped", "flipped/image_raw"),
-            #     ]
-            # )
+            ComposableNode(
+                namespace='jetbot/camera',
+                name='flip',
+                package='isaac_ros_image_proc',
+                plugin='nvidia::isaac_ros::image_proc::ImageFlipNode',
+                parameters=[
+                    { 'flip_mode': 'BOTH' }
+                ],
+                remappings=[
+                    ("image", "resize/image_raw"),
+                    ("image_flipped", "flipped/image_raw"),
+                ]
+            )
         ],
         # ros_arguments=[
         #     '--log-level', 'debug'
@@ -118,7 +118,7 @@ def generate_launch_description():
             ('compressed')
         ],
         remappings=[
-            ("in", "resize/image_raw"),
+            ("in", "flipped/image_raw"),
             ("out/compressed", "image_raw/compressed")
         ],
         emulate_tty=True)
