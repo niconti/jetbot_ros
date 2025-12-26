@@ -38,6 +38,7 @@
 import scipy.spatial.transform
 # ROS 2
 import rclpy
+import rclpy.logging
 import sensor_msgs.msg
 from rclpy.node import Node
 from rcl_interfaces.msg import ParameterDescriptor
@@ -138,6 +139,9 @@ class TeleopCamera(Node):
 def main(args=None):    
     rclpy.init(args=args)
 
+    # Node
+    node = TeleopCamera()
+
     # Init PCA9685
     try:
         pwm = PCA9685()
@@ -145,10 +149,6 @@ def main(args=None):
     except OSError as ex:
         node.get_logger().fatal("{}".format(ex))
         exit(1)
-
-
-    # Node
-    node = TeleopCamera()
 
     # Loop
     while rclpy.ok():
