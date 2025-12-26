@@ -1,6 +1,7 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch_ros.actions import Node
+from launch_ros.actions import Node, ComposableNodeContainer
+from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
@@ -67,17 +68,43 @@ def generate_launch_description():
     #                 ],
     #                 emulate_tty=True)
 
-    image_transport = Node(package='image_transport', executable='republish',
+    image_container = ComposableNodeContainer(
+                    namespace='jetbot/camera',
+                    name='image_proc_container',
+                    package='rclcpp_components',
+                    executable='component_container',
+                    composable_node_descriptions=[
+                        ComposableNode(
+                            namespace='jetbot/camera',
+                            name='resize',
+                            package='image_proc',
+                            plugin='image_proc::ResizeNode',
+                            parameters=[
+                                { 'use_scale': False },
+                                { 'width': 640 },
+                                { 'height': 480 },
+                                { 'image_transport': 'compressed' }
+                            ],
+                            remappings=[
+                                ("image/image_raw", "/left/image_raw"),
+                                ("image/camera_info", "/left/camera_info")
+                            ])
+                    ],
+                    emulate_tty=True)
+
+    image_transport = Node(
+                    namespace='jetbot/camera',
+                    package='image_transport', 
+                    executable='republish',
                     arguments=[
                         ('raw'),
                         ('compressed')
                     ],
                     remappings=[
-                        ("in", "/left/image_raw"),
-                        ("out/compressed", "/jetbot/camera/image_raw/compressed")
+                        ("in", "resized/image_raw"),
+                        ("out/compressed", "image_raw/compressed")
                     ],
                     emulate_tty=True)
-
 
     return LaunchDescription([
         # rtp_output_arg,
@@ -86,5 +113,6 @@ def generate_launch_description():
         # video_source,
         # detectenet,
         # video_output,
-        image_transport
+        image_container,
+        # image_transport
     ])
