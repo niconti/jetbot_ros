@@ -1,6 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, TextSubstitution
 from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from launch_ros.substitutions import FindPackageShare
@@ -46,10 +46,13 @@ def generate_launch_description():
         name='camera_id', 
         default_value='0')
 
+    camera_info_url_default = [
+        TextSubstitution(text='file://'), 
+        PathJoinSubstitution([FindPackageShare(PACKAGE_NAME), 'config', 'camera_info.yaml'])
+    ]
     camera_info_url_arg = DeclareLaunchArgument(
         name='camera_info_url', 
-        default_value=PathJoinSubstitution(['file://', FindPackageShare(PACKAGE_NAME), 'config', 'camera_info.yaml']))
-
+        default_value=camera_info_url_default)
 
     camera_container = ComposableNodeContainer(
         namespace='jetbot/camera',
