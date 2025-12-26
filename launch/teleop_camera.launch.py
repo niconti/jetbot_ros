@@ -1,7 +1,11 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
+from launch_ros.substitutions import FindPackageShare
+
+PACKAGE_NAME = 'jetbot_ros'
 
 
 def generate_launch_description():
@@ -11,16 +15,16 @@ def generate_launch_description():
     #     default_value="DUSTINF-LT1.fios-router.home:1234")
 
     teleop_camera = Node(
-                    package='jetbot_ros', 
-                    executable='teleop_camera',
-                    parameters=[
-                        { "pan_scale": 2.0 },
-                        { "tilt_scale": 2.0 },
-                    ],
-                    ros_arguments=[
-                        '--log-level', 'debug'
-                    ],
-                    emulate_tty=True)
+        package='jetbot_ros', 
+        executable='teleop_camera',
+        parameters=[
+            { "pan_scale": 2.0 },
+            { "tilt_scale": 2.0 }
+        ],
+        ros_arguments=[
+            '--log-level', 'debug'
+        ],
+        emulate_tty=True)
 
     # v4l2_camera = Node(
     #                 package='v4l2_camera', 
@@ -33,86 +37,97 @@ def generate_launch_description():
     #                     { "output_encoding": "bgr8" }
     #                 ],
     #                 emulate_tty=True)
+    
+    module_id_arg = DeclareLaunchArgument(
+        name='module_id', 
+        default_value='0')
 
-    # video_source = Node(package='ros_deep_learning', executable='video_source',
-    #                 parameters=[
-    #                     {"resource": "csi://0"},
-    #                     {"width": 640},
-    #                     {"height": 480},
-    #                     {"framerate": 15.0}
-    #                 ],
-    #                 remappings=[
-    #                     ("raw", "/jetbot/camera/image_raw"),
-    #                 ],
-    #                 emulate_tty=True)
+    camera_id_arg = DeclareLaunchArgument(
+        name='camera_id', 
+        default_value='0')
 
-    # detectenet = Node(package='ros_deep_learning', executable='detectnet',
-    #                 parameters=[
-    #                     {"model_name": "ssd-mobilenet-v2"},
-    #                     {"overlay_flags": "box,labels,conf"},
-    #                     {"mean_pixel_value": 0.00},
-    #                     {"threshold": 0.5}
-    #                 ],
-    #                 remappings=[
-    #                     ("image_in", "/jetbot/camera/image_raw"),
-    #                 ],
-    #                 emulate_tty=True)
+    camera_info_url_arg = DeclareLaunchArgument(
+        name='camera_info_url', 
+        default_value=PathJoinSubstitution(['file://', FindPackageShare(PACKAGE_NAME), 'config', 'camera_info.yaml']))
 
-    # video_output = Node(package='ros_deep_learning', executable='video_output',
-    #                 parameters=[
-    #                     {"resource": ["rtp://", LaunchConfiguration('rtp_output')]},
-    #                     {"codec": "h264"},
-    #                 ],
-    #                 remappings=[
-    #                     ("image_in", "/jetbot/camera/image_raw"),
-    #                 ],
-    #                 emulate_tty=True)
 
-    image_container = ComposableNodeContainer(
-                    namespace='jetbot/camera',
-                    name='image_proc_container',
-                    package='rclcpp_components',
-                    executable='component_container',
-                    composable_node_descriptions=[
-                        ComposableNode(
-                            namespace='jetbot/camera',
-                            name='resize',
-                            package='image_proc',
-                            plugin='image_proc::ResizeNode',
-                            parameters=[
-                                { 'use_scale': False },
-                                { 'width': 640 },
-                                { 'height': 480 },
-                                { 'image_transport': 'compressed' }
-                            ],
-                            remappings=[
-                                ("image/image_raw", "/left/image_raw"),
-                                ("image/camera_info", "/left/camera_info")
-                            ])
-                    ],
-                    emulate_tty=True)
+    camera_container = ComposableNodeContainer(
+        namespace='jetbot/camera',
+        name='camera_container',
+        package='rclcpp_components',
+        executable='component_container',
+        composable_node_descriptions=[
+            ComposableNode(
+                namespace='jetbot/camera',
+                name='argus_mono',
+                package='isaac_ros_argus_camera',
+                plugin='nvidia::isaac_ros::argus::ArgusMonoNode',
+                parameters=[
+                    { 'module_id': LaunchConfiguration('module_id') },
+                    { 'camera_id': LaunchConfiguration('camera_id') },
+                    { 'camera_info_url': LaunchConfiguration('camera_info_url') }
+                ],
+                remappings=[
+                    ("left/image_raw", "image_raw"),
+                    ("left/camera_info", "camera_info")
+                ]
+            ),
+            ComposableNode(
+                namespace='jetbot/camera',
+                name='resize',
+                package='isaac_ros_image_proc',
+                plugin='nvidia::isaac_ros::image_proc::ResizeNode',
+                parameters=[
+                    { 'input_width': 3280 },
+                    { 'input_height': 2464 },
+                    { 'output_width': 640 },
+                    { 'output_height': 480 }
+                ],
+                remappings=[
+                    ("image", "image_raw"),
+                    ("camera_info", "camera_info"),
+                    ("resize/image", "resize/image_raw"),
+                    ("resize/camera_info", "resize/camera_info")
+                ]
+            ),
+            # ComposableNode(
+            #     namespace='jetbot/camera',
+            #     name='flip',
+            #     package='isaac_ros_image_proc',
+            #     plugin='nvidia::isaac_ros::image_proc::ImageFlipNode',
+            #     parameters=[
+            #         { 'flip_mode': 'BOTH' }
+            #     ],
+            #     remappings=[
+            #         ("image", "resize/image_raw"),
+            #         ("image_flipped", "flipped/image_raw"),
+            #     ]
+            # )
+        ],
+        # ros_arguments=[
+        #     '--log-level', 'debug'
+        # ],
+        emulate_tty=True)
 
     image_transport = Node(
-                    namespace='jetbot/camera',
-                    package='image_transport', 
-                    executable='republish',
-                    arguments=[
-                        ('raw'),
-                        ('compressed')
-                    ],
-                    remappings=[
-                        ("in", "resized/image_raw"),
-                        ("out/compressed", "image_raw/compressed")
-                    ],
-                    emulate_tty=True)
+        namespace='jetbot/camera',
+        package='image_transport', 
+        executable='republish',
+        arguments=[
+            ('raw'),
+            ('compressed')
+        ],
+        remappings=[
+            ("in", "resize/image_raw"),
+            ("out/compressed", "image_raw/compressed")
+        ],
+        emulate_tty=True)
 
     return LaunchDescription([
-        # rtp_output_arg,
-        teleop_camera,
-        # v4l2_camera
-        # video_source,
-        # detectenet,
-        # video_output,
-        image_container,
-        # image_transport
+        # teleop_camera,
+        module_id_arg,
+        camera_id_arg,
+        camera_info_url_arg,
+        camera_container,
+        image_transport
     ])
