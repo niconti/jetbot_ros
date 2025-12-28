@@ -59,16 +59,25 @@ class TeleopCamera(Node):
         self.TILT_MIN = 0
         self.TILT_MAX = 80
 
+        self._has_changed = True
         self._pan  = self.PAN_INIT
         self._tilt = self.TILT_INIT
 
         # Parameters
         self.declare_parameter('pan_scale', 1.0, ParameterDescriptor(description="The amount of scaling applied to pan command."))
         self.declare_parameter('tilt_scale', 1.0, ParameterDescriptor(description="The amount of scaling applied to tilt command."))
+        self.PAN_SCALE  = self.get_parameter('pan_scale').value
+        self.TILT_SCALE = self.get_parameter('tilt_scale').value
 
         # Subscribed Topics
         self.imu_sub = self.create_subscription(sensor_msgs.msg.Imu, 'imu', self.imu_cb, 10)
         self.joy_sub = self.create_subscription(sensor_msgs.msg.Joy, 'joy', self.joy_cb, 10)
+
+
+    def has_changed(self) -> bool:
+        value = self._has_changed
+        self._has_changed = False
+        return value
 
 
     @property
@@ -76,9 +85,12 @@ class TeleopCamera(Node):
         return self._pan
 
     @pan.setter
-    def pan(self, value):
+    def pan(self, value: int):
+        value = round(value)
         value = max(self.PAN_MIN, value)
         value = min(value, self.PAN_MAX)
+        if self.pan != value:
+            self._has_changed = True
         self._pan = value
     
 
@@ -87,14 +99,18 @@ class TeleopCamera(Node):
         return self._tilt
 
     @tilt.setter
-    def tilt(self, value):
+    def tilt(self, value: int):
+        value = round(value)
         value = max(self.TILT_MIN, value)
         value = min(value, self.TILT_MAX)
+        if self.tilt != value:
+            self._has_changed = True
         self._tilt = value
 
 
     def imu_cb(self, msg: sensor_msgs.msg.Imu):
-    
+        """
+        """
         qx = msg.orientation.x
         qy = msg.orientation.y
         qz = msg.orientation.z
@@ -112,18 +128,14 @@ class TeleopCamera(Node):
         self.pan  = self.PAN_INIT - yaw
         self.tilt = self.TILT_INIT - pitch
 
-        self.get_logger().debug("pan, tilt: {:.1f} {:.1f}".format(self.pan, self.tilt))
-
 
     def joy_cb(self, msg: sensor_msgs.msg.Joy):
-    
+        """
+        """
         self.get_logger().debug("axes: {}".format(msg.axes))
 
-        PAN_SCALE  = self.get_parameter('pan_scale').value
-        TILT_SCALE = self.get_parameter('tilt_scale').value
-
-        pan_inc  = round(PAN_SCALE  * msg.axes[3])
-        tilt_inc = round(TILT_SCALE * msg.axes[4])
+        pan_inc  = round(self.PAN_SCALE  * msg.axes[3])
+        tilt_inc = round(self.TILT_SCALE * msg.axes[4])
 
         self.pan  += pan_inc
         self.tilt += tilt_inc
@@ -132,8 +144,6 @@ class TeleopCamera(Node):
         if msg.buttons[10]:
             self.pan  = self.PAN_INIT
             self.tilt = self.TILT_INIT
-
-        self.get_logger().debug("pan, tilt: {:.1f} {:.1f}".format(self.pan, self.tilt))
 
 
 def main(args=None):    
@@ -146,15 +156,20 @@ def main(args=None):
     try:
         pwm = PCA9685()
         pwm.setPWMFreq(50)
-    except OSError as ex:
-        node.get_logger().fatal("{}".format(ex))
+    except OSError as err:
+        node.get_logger().fatal("{}".format(err))
         exit(1)
 
     # Loop
     while rclpy.ok():
         rclpy.spin_once(node)
-        pwm.setRotationAngle(1, node.pan)
-        pwm.setRotationAngle(0, node.tilt)
+        try:
+            if node.has_changed():
+                node.get_logger().info("Pan: {}, Tilt: {}".format(node.pan, node.tilt))
+                pwm.setRotationAngle(1, node.pan)
+                pwm.setRotationAngle(0, node.tilt)
+        except OSError as err:
+            node.get_logger().error("{}".format(err))
 
     pwm.exit_PCA9685()
 

@@ -10,19 +10,15 @@ PACKAGE_NAME = 'jetbot_ros'
 
 def generate_launch_description():
 
-    # rtp_output_arg = DeclareLaunchArgument(
-    #     'rtp_output', 
-    #     default_value="DUSTINF-LT1.fios-router.home:1234")
-
     teleop_camera = Node(
         package='jetbot_ros', 
         executable='teleop_camera',
         parameters=[
-            { "pan_scale": 2.0 },
-            { "tilt_scale": 2.0 }
+            { "pan_scale": 1.0 },
+            { "tilt_scale": 1.0 }
         ],
         ros_arguments=[
-            '--log-level', 'debug'
+            '--log-level', 'info'
         ],
         emulate_tty=True)
 
@@ -40,7 +36,7 @@ def generate_launch_description():
     
     module_id_arg = DeclareLaunchArgument(
         name='module_id', 
-        default_value='0')
+        default_value='-1')
 
     camera_id_arg = DeclareLaunchArgument(
         name='camera_id', 
@@ -103,7 +99,7 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("image", "resize/image_raw"),
-                    ("image_flipped", "flipped/image_raw"),
+                    ("image_flipped", "flip/image_raw"),
                 ]
             )
         ],
@@ -121,13 +117,13 @@ def generate_launch_description():
             ('compressed')
         ],
         remappings=[
-            ("in", "flipped/image_raw"),
+            ("in", "resize/image_raw"),
             ("out/compressed", "image_raw/compressed")
         ],
         emulate_tty=True)
 
     return LaunchDescription([
-        # teleop_camera,
+        teleop_camera,
         module_id_arg,
         camera_id_arg,
         camera_info_url_arg,
