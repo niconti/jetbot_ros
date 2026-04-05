@@ -96,7 +96,7 @@ def generate_launch_description():
             ("out/compressed", "image_raw/compressed")
         ],
         emulate_tty=True)
-    
+
     teleop_camera = Node(
         package='jetbot_ros', 
         executable='teleop_camera',
