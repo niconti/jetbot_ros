@@ -47,20 +47,20 @@ from jetbot_ros.PCA9685 import PCA9685
 
 
 class TeleopCamera(Node):
+    """
+    Node controlling camera pan-tilt axes.
+    """
  
     def __init__(self, pwm):
         """
         """
         super().__init__('teleop_camera_node')
-
         self.PAN_INIT = 90
         self.PAN_MIN = 10
         self.PAN_MAX = 170
-
         self.TILT_INIT = 50
         self.TILT_MIN = 0
         self.TILT_MAX = 80
-
         self._pwm = pwm
         self._has_changed = True
         self._pan  = self.PAN_INIT
@@ -72,7 +72,7 @@ class TeleopCamera(Node):
         self.PAN_SCALE  = self.get_parameter('pan_scale').value
         self.TILT_SCALE = self.get_parameter('tilt_scale').value
 
-        # Subscribed Topics
+        # Subscribers
         self.imu_sub = self.create_subscription(sensor_msgs.msg.Imu, 'imu', self.imu_cb, 10)
         self.joy_sub = self.create_subscription(sensor_msgs.msg.Joy, 'joy', self.joy_cb, 10)
 
@@ -101,7 +101,7 @@ class TeleopCamera(Node):
         if self.pan != value:
             self._has_changed = True
         self._pan = value
-    
+
 
     @property
     def tilt(self):
@@ -124,7 +124,6 @@ class TeleopCamera(Node):
         qy = msg.orientation.y
         qz = msg.orientation.z
         qw = msg.orientation.w
-
         R = scipy.spatial.transform.Rotation.from_quat([qx, qy, qz, qw])
 
         euler = R.as_euler('xyz', degrees=True)
@@ -182,7 +181,8 @@ def main(args=None):
         pwm = PCA9685()
         pwm.setPWMFreq(50)
     except OSError as err:
-        rclpy.logging.get_logger().fatal("{}, init fail.".format(err))
+        name = f"{__name__}"
+        rclpy.logging.get_logger(name).fatal("{}, init fail.".format(err))
         exit(1)
     node = TeleopCamera(pwm)
 

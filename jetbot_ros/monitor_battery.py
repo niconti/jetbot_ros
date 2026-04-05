@@ -114,7 +114,8 @@ def main(args=None):
     try:
         ina219 = INA219(addr=0x42)
     except OSError as err:
-        rclpy.logging.get_logger('root').fatal("{}, init fail.".format(err))
+        name = f"{__name__}"
+        rclpy.logging.get_logger(name).fatal("{}, init fail.".format(err))
         exit(1)
     node = MonitorBattery(ina219)
 
