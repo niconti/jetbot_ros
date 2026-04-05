@@ -10,30 +10,6 @@ PACKAGE_NAME = 'jetbot_ros'
 
 def generate_launch_description():
 
-    teleop_camera = Node(
-        package='jetbot_ros', 
-        executable='teleop_camera',
-        parameters=[
-            { "pan_scale": 1.0 },
-            { "tilt_scale": 1.0 }
-        ],
-        ros_arguments=[
-            '--log-level', 'info'
-        ],
-        emulate_tty=True)
-
-    # v4l2_camera = Node(
-    #                 package='v4l2_camera', 
-    #                 namespace='jetbot/camera',
-    #                 executable='v4l2_camera_node',
-    #                 parameters=[
-    #                     { "video_device": "/dev/video0" },
-    #                     # { "image_size": [640, 480] },
-    #                     { "image_size": [1920, 1080] },
-    #                     { "output_encoding": "bgr8" }
-    #                 ],
-    #                 emulate_tty=True)
-    
     module_id_arg = DeclareLaunchArgument(
         name='module_id', 
         default_value='-1')
@@ -42,13 +18,12 @@ def generate_launch_description():
         name='camera_id', 
         default_value='0')
 
-    camera_info_url_default = [
-        TextSubstitution(text='file://'), 
-        PathJoinSubstitution([FindPackageShare(PACKAGE_NAME), 'config', 'camera_info.yaml'])
-    ]
     camera_info_url_arg = DeclareLaunchArgument(
         name='camera_info_url', 
-        default_value=camera_info_url_default)
+        default_value=[
+            TextSubstitution(text='file://'), 
+            PathJoinSubstitution([FindPackageShare(PACKAGE_NAME), 'config', 'camera_info.yaml'])
+        ])
 
     camera_container = ComposableNodeContainer(
         namespace='jetbot/camera',
@@ -103,9 +78,9 @@ def generate_launch_description():
                 ]
             )
         ],
-        # ros_arguments=[
-        #     '--log-level', 'debug'
-        # ],
+        ros_arguments=[
+            '--log-level', 'info'
+        ],
         emulate_tty=True)
 
     image_transport = Node(
@@ -117,16 +92,28 @@ def generate_launch_description():
             ('compressed')
         ],
         remappings=[
-            ("in", "resize/image_raw"),
+            ("in", "flip/image_raw"),
             ("out/compressed", "image_raw/compressed")
+        ],
+        emulate_tty=True)
+    
+    teleop_camera = Node(
+        package='jetbot_ros', 
+        executable='teleop_camera',
+        parameters=[
+            { "pan_scale": 1.0 },
+            { "tilt_scale": 1.0 }
+        ],
+        ros_arguments=[
+            '--log-level', 'info'
         ],
         emulate_tty=True)
 
     return LaunchDescription([
-        teleop_camera,
         module_id_arg,
         camera_id_arg,
         camera_info_url_arg,
         camera_container,
-        image_transport
+        image_transport,
+        teleop_camera
     ])

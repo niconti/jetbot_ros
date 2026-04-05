@@ -165,7 +165,7 @@ def main(args=None):
         rclpy.spin_once(node)
         try:
             if node.has_changed():
-                node.get_logger().info("Pan: {}, Tilt: {}".format(node.pan, node.tilt))
+                node.get_logger().debug("Pan: {}, Tilt: {}".format(node.pan, node.tilt))
                 pwm.setRotationAngle(1, node.pan)
                 pwm.setRotationAngle(0, node.tilt)
         except OSError as err:
