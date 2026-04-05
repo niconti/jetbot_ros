@@ -48,7 +48,9 @@ from jetbot_ros.PCA9685 import PCA9685
 
 class TeleopCamera(Node):
  
-    def __init__(self):
+    def __init__(self, pwm):
+        """
+        """
         super().__init__('teleop_camera_node')
 
         self.PAN_INIT = 90
@@ -59,6 +61,7 @@ class TeleopCamera(Node):
         self.TILT_MIN = 0
         self.TILT_MAX = 80
 
+        self._pwm = pwm
         self._has_changed = True
         self._pan  = self.PAN_INIT
         self._tilt = self.TILT_INIT
@@ -72,6 +75,12 @@ class TeleopCamera(Node):
         # Subscribed Topics
         self.imu_sub = self.create_subscription(sensor_msgs.msg.Imu, 'imu', self.imu_cb, 10)
         self.joy_sub = self.create_subscription(sensor_msgs.msg.Joy, 'joy', self.joy_cb, 10)
+
+
+    def __del__(self):
+        """
+        """
+        self._pwm.exit_PCA9685()
 
 
     def has_changed(self) -> bool:
@@ -128,6 +137,10 @@ class TeleopCamera(Node):
         self.pan  = self.PAN_INIT - yaw
         self.tilt = self.TILT_INIT - pitch
 
+        # update pwm
+        if self.has_changed():
+            self.update_pwm(self.pan, self.tilt)
+
 
     def joy_cb(self, msg: sensor_msgs.msg.Joy):
         """
@@ -145,36 +158,39 @@ class TeleopCamera(Node):
             self.pan  = self.PAN_INIT
             self.tilt = self.TILT_INIT
 
+        # update pwm
+        if self.has_changed():
+            self.update_pwm(self.pan, self.tilt)
+
+
+    def update_pwm(self, pan: int, tilt: int):
+        """
+        """
+        try:
+            self.get_logger().debug("Pan: {}, Tilt: {}".format(pan, tilt))
+            self._pwm.setRotationAngle(1, pan)
+            self._pwm.setRotationAngle(0, tilt)
+        except OSError as err:
+            self.get_logger().error("{}, update pwm fail".format(err))
+
 
 def main(args=None):    
     rclpy.init(args=args)
 
     # Init
-    node = TeleopCamera()
     try:
         pwm = PCA9685()
         pwm.setPWMFreq(50)
     except OSError as err:
-        node.get_logger().fatal("{}, startup fail.".format(err))
+        rclpy.logging.get_logger().fatal("{}, init fail.".format(err))
         exit(1)
+    node = TeleopCamera(pwm)
 
-    # Loop
-    while rclpy.ok():
-        try:
-            rclpy.spin_once(node)
-            if node.has_changed():
-                node.get_logger().debug("Pan: {}, Tilt: {}".format(node.pan, node.tilt))
-                pwm.setRotationAngle(1, node.pan)
-                pwm.setRotationAngle(0, node.tilt)
-        except OSError as err:
-            node.get_logger().error("{}, update fail".format(err))
-        except KeyboardInterrupt as err:
-            node.get_logger().debug("user asked to shutdown")
-
-    # Stop
-    node.get_logger().info("shutting down ...")
-    node.destroy_node()
-    pwm.exit_PCA9685()
+    # Spin
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt as err:
+        node.get_logger().debug("user asked to shutdown")
 
 
 if __name__ == '__main__':
