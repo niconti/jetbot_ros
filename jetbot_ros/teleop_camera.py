@@ -149,7 +149,7 @@ class TeleopCamera(Node):
 def main(args=None):    
     rclpy.init(args=args)
 
-    # Startup
+    # Init
     node = TeleopCamera()
     try:
         pwm = PCA9685()
@@ -158,7 +158,7 @@ def main(args=None):
         node.get_logger().fatal("{}, startup fail.".format(err))
         exit(1)
 
-    # Update
+    # Loop
     while rclpy.ok():
         try:
             rclpy.spin_once(node)
@@ -171,7 +171,7 @@ def main(args=None):
         except KeyboardInterrupt as err:
             node.get_logger().debug("user asked to shutdown")
 
-    # Shutdown
+    # Stop
     node.get_logger().info("shutting down ...")
     node.destroy_node()
     pwm.exit_PCA9685()
