@@ -162,19 +162,19 @@ def main(args=None):
 
     # Loop
     while rclpy.ok():
-        rclpy.spin_once(node)
         try:
+            rclpy.spin_once(node)
             if node.has_changed():
                 node.get_logger().debug("Pan: {}, Tilt: {}".format(node.pan, node.tilt))
                 pwm.setRotationAngle(1, node.pan)
                 pwm.setRotationAngle(0, node.tilt)
         except OSError as err:
             node.get_logger().error("{}".format(err))
-
-    pwm.exit_PCA9685()
+        except KeyboardInterrupt as err:
+            node.get_logger().info("{}, shutting down ...".format("KeyboardInterrupt"))
 
     node.destroy_node()
-    rclpy.shutdown()
+    pwm.exit_PCA9685()
 
 
 if __name__ == '__main__':
