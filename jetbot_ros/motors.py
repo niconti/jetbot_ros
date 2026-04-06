@@ -13,16 +13,18 @@ class MotorController(Node):
     """
     def __init__(self):
         super().__init__('motors', namespace='jetbot')
+        self._has_changed = True
+        self._vx = 0.0
+        self._wz = 0.0
 
-        self.sub = self.create_subscription(Twist, 'cmd_vel', self.command_velocity_cb, 10)
-
+        # Parameters
         self.declare_parameter('left_trim', 0.0)
         self.declare_parameter('right_trim', 0.0)
         self.declare_parameter('max_pwm', 255)
         self.declare_parameter('max_rpm', 200)              # https://www.adafruit.com/product/3777
         self.declare_parameter('wheel_separation', 0.1016)  # 4 inches
         self.declare_parameter('wheel_diameter', 0.060325)  # 2 3/8 inches
-        
+
         self.left_trim = self.get_parameter('left_trim').value
         self.right_trim = self.get_parameter('right_trim').value
         self.max_pwm = self.get_parameter('max_pwm').value
@@ -31,9 +33,9 @@ class MotorController(Node):
         self.wheel_diameter = self.get_parameter('wheel_diameter').value        
         self.add_on_set_parameters_callback(self.parameters_callback)
 
-        self._has_changed = True
-        self._vx = 0.0
-        self._wz = 0.0
+        # Subscriptions
+        self.sub = self.create_subscription(Twist, 'cmd_vel', self.command_velocity_cb, 10)
+
 
     @property
     def vx(self):
@@ -68,17 +70,23 @@ class MotorController(Node):
 
 
     def parameters_callback(self, params):
+        """
+        Callback called when a parameters update is requested.
+        """
         for param in params:
             if param.name == 'left_trim':
                 self.left_trim = param.value
-            elif param.name == 'right_trim':
+                continue
+            if param.name == 'right_trim':
                 self.right_trim = param.value
-            elif param.name == 'max_pwm':
+                continue
+            if param.name == 'max_pwm':
                 self.max_pwm = param.value
-            elif param.name == 'wheel_separation':
+                continue
+            if param.name == 'wheel_separation':
                 self.wheel_separation = param.value
-            else:
-                raise ValueError(f'unknown parameter {param.name}')
+                continue
+            raise ValueError(f'unknown parameter {param.name}')
 
         return SetParametersResult(successful=True)
         

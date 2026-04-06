@@ -1,6 +1,8 @@
 jetbot:
   motors:
     ros__parameters:
+      left_trim: 0.15
+      right_trim: 0.15
       max_pwm: 255
       max_rpm: 225
       wheel_separation: 0.135
