@@ -15,22 +15,6 @@ PACKAGE_NAME = 'jetbot_ros'
 
 def generate_launch_description():
 
-    jetbot_config_file_arg = DeclareLaunchArgument(
-        name='jetbot_config_file', 
-        default_value=[
-            PathJoinSubstitution([FindPackageShare(PACKAGE_NAME), 'config', 'jetbot.config.yaml'])
-        ])
-
-    joy_config_arg = DeclareLaunchArgument(
-        name='joy_config', 
-        default_value='logitech')
-
-    joy_config_file_arg = DeclareLaunchArgument(
-        name='joy_config_file', 
-        default_value=[
-            PathJoinSubstitution([FindPackageShare(PACKAGE_NAME), 'config', '']), LaunchConfiguration('joy_config'), '.config.yaml'
-        ])
-
     monitor_battery = Node(
         package='jetbot_ros', 
         executable='monitor_battery',
@@ -42,32 +26,11 @@ def generate_launch_description():
             '--log-level', 'info'
         ],
         emulate_tty=True)
-
-    motor_controller = Node(
-        package='jetbot_ros',
-        executable='motors_nvidia',
-        parameters=[LaunchConfiguration('jetbot_config_file')],
-        ros_arguments=[
-            '--log-level', 'debug',
-            '--log-level', 'rcl:=info'
-        ],
-        emulate_tty=True)              
-
-    teleop_robot = Node(
-        name='teleop_robot',
-        package='teleop_twist_joy', 
-        executable='teleop_node',
-        parameters=[
-            LaunchConfiguration('joy_config_file')
-        ],
-        remappings=[
-            ("cmd_vel", "jetbot/cmd_vel"),
-        ],
-        ros_arguments=[
-            '--log-level', 'debug',
-            '--log-level', 'rcl:=info'
-        ],
-        emulate_tty=True)
+    
+    teleop_robot_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([
+            PathJoinSubstitution([FindPackageShare('jetbot_ros'), 'launch', 'teleop_robot.launch.py'])
+        ]))
 
     teleop_camera_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource([
@@ -83,12 +46,8 @@ def generate_launch_description():
         }.items())
 
     return LaunchDescription([
-        joy_config_arg,
-        joy_config_file_arg,
-        jetbot_config_file_arg,
-        motor_controller,
         monitor_battery,
-        teleop_robot,
+        teleop_robot_launch,
         teleop_camera_launch,
         wireless_watcher_launch
     ])
