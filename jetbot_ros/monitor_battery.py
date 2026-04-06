@@ -39,8 +39,8 @@ import rclpy.logging
 from rclpy.node import Node
 from rcl_interfaces.msg import ParameterDescriptor
 from sensor_msgs.msg import BatteryState
-# Waveshare UPS
-from jetbot_ros.INA219 import INA219
+# Waveshare UPS Module(C)
+from jetbot_ros.ina219 import INA219
 
 
 class MonitorBattery(Node):
@@ -50,8 +50,9 @@ class MonitorBattery(Node):
 
     def __init__(self, ina219):
         super().__init__('monitor_battery_node')
-        self.MAX_VOLTAGE = 8.4
-        self.MIN_VOLTAGE = 6.0
+        self.MAX_VOLTAGE = 12.6     # The battery pack voltage when fully charged. [V]
+        self.MIN_VOLTAGE = 9.0      # The battery pack voltage when fully discharged. [V]
+        self.CAPACITY = 3 * 5000    # The battery pack capacity. [mAh]
         self.ina219 = ina219
 
         # Parameters
@@ -64,12 +65,13 @@ class MonitorBattery(Node):
 
         # Timers
         freq = self.get_parameter('frequency').value
-        self.update_timer = self.create_timer(freq, self.update_cb)
+        self.update_timer = self.create_timer(freq, self.refresh_battery)
 
 
-    def update_cb(self):
+    def refresh_battery(self):
+        """
+        """
         timestamp = self.get_clock().now()
-
         WARNING_LEVEL  = self.get_parameter('warninig_level').value
         CRITICAL_LEVEL = self.get_parameter('critical_level').value
 
@@ -78,8 +80,8 @@ class MonitorBattery(Node):
             shunt_voltage = self.ina219.getShuntVoltage_mV() / 1000     # voltage between V+ and V- across the shunt
             current       = self.ina219.getCurrent_mA() / 1000          # current in A
             power         = self.ina219.getPower_W()                    # power in W      
-        except OSError as e:
-            self.get_logger().error("{}".format(e))
+        except OSError as err:
+            self.get_logger().error("{}, refresh battery fail".format(err))
             return
 
         percentage = (bus_voltage - self.MIN_VOLTAGE) / (self.MAX_VOLTAGE - self.MIN_VOLTAGE)
@@ -92,8 +94,8 @@ class MonitorBattery(Node):
         msg.voltage = bus_voltage
         msg.current = current
         msg.percentage = percentage
-        msg.design_capacity = 12.0                                      # 4 x 3000 mAh
-        
+        msg.design_capacity = self.CAPACITY / 1000
+
         if current > 0:
             msg.power_supply_status = BatteryState.POWER_SUPPLY_STATUS_CHARGING 
         if current < 0:
@@ -112,7 +114,7 @@ def main(args=None):
 
     # Init
     try:
-        ina219 = INA219(addr=0x42)
+        ina219 = INA219(addr=0x41)
     except OSError as err:
         name = f"{__name__}"
         rclpy.logging.get_logger(name).fatal("{}, init fail.".format(err))
@@ -120,7 +122,10 @@ def main(args=None):
     node = MonitorBattery(ina219)
 
     # Spin
-    rclpy.spin(node)
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt as err:
+        node.get_logger().debug("user asked to shutdown")
 
 
 if __name__ == '__main__':
