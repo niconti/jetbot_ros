@@ -11,7 +11,8 @@
   <depend>python3-smbus</depend>
 
   <exec_depend>teleop_twist_joy</exec_depend>
-  <exec_depend>image_pipeline</exec_depend>
+  <exec_depend>isaac_ros_argus_camera</exec_depend>
+  <exec_depend>isaac_ros_image_proc</exec_depend>
   <exec_depend>image_transport</exec_depend>
   <exec_depend>wireless_watcher</exec_depend>
 
