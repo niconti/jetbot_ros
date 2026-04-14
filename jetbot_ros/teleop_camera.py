@@ -143,6 +143,10 @@ class TeleopCamera(Node):
 
     def joy_cb(self, msg: sensor_msgs.msg.Joy):
         """
+        @brief          The joystock sensor callback.
+        @details        Callback called when a joystock sensoe message arrives.
+
+        @param msg      The message arrived.
         """
         self.get_logger().debug("axes: {}".format(msg.axes))
 
@@ -164,9 +168,13 @@ class TeleopCamera(Node):
 
     def update_pwm(self, pan: int, tilt: int):
         """
+        @brief          Update PWM values.
+
+        @param pan      The pan value [deg].
+        @param tilt     The tilt value [deg].
         """
+        self.get_logger().debug("Pan: {}, Tilt: {}".format(pan, tilt))
         try:
-            self.get_logger().debug("Pan: {}, Tilt: {}".format(pan, tilt))
             self._pwm.setRotationAngle(1, pan)
             self._pwm.setRotationAngle(0, tilt)
         except OSError as err:
